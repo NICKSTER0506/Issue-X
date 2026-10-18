@@ -28,8 +28,10 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Flame
+  Flame,
+  GitCompare
 } from 'lucide-react';
+import DiffViewer from './DiffViewer';
 
 export default function App() {
   const [issueUrl, setIssueUrl] = useState('');
@@ -613,7 +615,7 @@ export default function App() {
 
                 <div className="p-4 font-mono text-xs overflow-x-auto text-slate-200 bg-slate-950/95 max-h-72 overflow-y-auto">
                   <div className="text-slate-500 text-[11px] mb-2 select-none">
-                    $ pytest -v --no-header test_repro.py
+                    $ {result?.target_filename?.endsWith('.js') ? 'node --test test_repro.test.js' : 'pytest -v --no-header test_repro.py'}
                   </div>
                   <pre className="whitespace-pre-wrap leading-relaxed">
                     {executionResult.stdout || executionResult.stderr || "(No output captured)"}
@@ -638,7 +640,7 @@ export default function App() {
                     }`}
                   >
                     <FileCode2 className="h-4 w-4 text-amber-400" />
-                    <span>target_module.py</span>
+                    <span>{result?.target_filename || 'target_module.py'}</span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">Editable</span>
                   </button>
 
@@ -652,8 +654,22 @@ export default function App() {
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-rose-500 inline-block" />
-                    <span>test_repro.py</span>
+                    <span>{result?.target_filename?.endsWith('.js') ? 'test_repro.test.js' : 'test_repro.py'}</span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono uppercase">RED</span>
+                  </button>
+
+                  {/* Git Diff Viewer */}
+                  <button
+                    onClick={() => setActiveTab('git_diff')}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+                      activeTab === 'git_diff'
+                        ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30 shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <GitCompare className="h-4 w-4 text-purple-400" />
+                    <span>Git Diff</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono">Diff</span>
                   </button>
 
                   {/* PREFLIGHT.md */}
@@ -709,7 +725,7 @@ export default function App() {
                         <span>{copiedKey === 'target_module' ? 'Copied!' : 'Copy Code'}</span>
                       </button>
                       <button
-                        onClick={() => downloadFile('target_module.py', sourceCode)}
+                        onClick={() => downloadFile(result?.target_filename || 'target_module.py', sourceCode)}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
                       >
                         <Download className="h-3.5 w-3.5" />
@@ -728,7 +744,7 @@ export default function App() {
                         <span>{copiedKey === 'test_repro' ? 'Copied!' : 'Copy Code'}</span>
                       </button>
                       <button
-                        onClick={() => downloadFile('test_repro.py', testCode)}
+                        onClick={() => downloadFile(result?.target_filename?.endsWith('.js') ? 'test_repro.test.js' : 'test_repro.py', testCode)}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
                       >
                         <Download className="h-3.5 w-3.5" />
@@ -832,7 +848,20 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 3. PREFLIGHT.md */}
+                {/* Git Diff View */}
+                {activeTab === 'git_diff' && (
+                  <DiffViewer
+                    originalCode={sourceCode}
+                    patchCode={patchCode}
+                    unifiedDiffText={result?.unified_diff}
+                    rootCause={result?.root_cause_explanation}
+                    remediation={result?.remediation_explanation}
+                    targetFilename={result?.target_filename || 'target_module.py'}
+                    onApplyPatch={handleApplyPatch}
+                  />
+                )}
+
+                {/* 4. PREFLIGHT.md */}
                 {activeTab === 'preflight_md' && (
                   <div className="space-y-4 font-sans text-sm text-slate-200">
                     <pre className="font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed bg-slate-900/50 p-4 rounded-xl border border-slate-800">
