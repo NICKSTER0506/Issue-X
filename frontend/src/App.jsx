@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import DiffViewer from './DiffViewer';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function App() {
   const [issueUrl, setIssueUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ export default function App() {
 
   // Load curated sample issues
   useEffect(() => {
-    fetch('/samples')
+    fetch(`${API_BASE}/samples`)
       .then(res => res.json())
       .then(data => {
         setSamples(data);
@@ -152,7 +154,7 @@ export default function App() {
     setExecutionResult(null);
 
     try {
-      const res = await fetch('/analyze', {
+      const res = await fetch(`${API_BASE}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -189,7 +191,7 @@ export default function App() {
     setExecuting(true);
 
     try {
-      const res = await fetch('/execute', {
+      const res = await fetch(`${API_BASE}/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
